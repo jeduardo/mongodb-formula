@@ -3,31 +3,6 @@
 ## verbatim. The storage:dbPath and systemLog:path entries are required in
 ## this usage and take precedence over db_path at the top level (see references
 ## in mongodb/init.sls).
-mongodb:
-  use_repo: True
-  version: 3.2 # use oldstable in for 1.8 - 2.6
-  repo_component: multiverse    # this is for Ubuntu, use 'main' for Debian
-  mongodb_package: mongodb-org
-  mongodb_user: mongodb
-  mongodb_group: mongodb
-  mongod: mongod
-  conf_path: /etc/mongod.conf
-  log_path: /mongodb/log
-  db_path: /mongodb/data
-  mongod_settings:
-    systemLog:
-      destination: file
-      logAppend: true
-      path: /var/log/mongodb/mongod.log
-    storage:
-      dbPath: /var/lib/mongodb
-      journal:
-        enabled: true
-    net:
-      port: 27017
-      bindIp: 0.0.0.0
-    setParameter:
-      textSearchEnabled: true
 
 ## Use this for MongoDB 2.4
 # mongodb:
@@ -53,11 +28,83 @@ mongodb:
 #   version: 3.0
 #   keyid: 7F0CEB10 
 
-## MongoDB query router configuration
-mongos:
+## Use this for MongoDB 3.2
+# mongodb:
+#   use_repo: True
+#   version: 3.2 # use oldstable in for 1.8 - 2.6
+#   repo_component: multiverse    # this is for Ubuntu, use 'main' for Debian
+#   mongodb_package: mongodb-org
+#   mongodb_user: mongodb
+#   mongodb_group: mongodb
+#   mongod: mongod
+#   conf_path: /etc/mongod.conf
+#   log_path: /mongodb/log
+#   db_path: /mongodb/data
+#   mongod_settings:
+#     systemLog:
+#       destination: file
+#       logAppend: true
+#       path: /var/log/mongodb/mongod.log
+#     storage:
+#       dbPath: /var/lib/mongodb
+#       journal:
+#         enabled: true
+#     net:
+#       port: 27017
+#       bindIp: 0.0.0.0
+#     setParameter:
+#       textSearchEnabled: true
+
+
+## Use this for MongoDB 3.6 on Debian
+mongodb:
   use_repo: True
-  mongos_package: mongodb-org-mongos
-  log_path: /mongodb/log
-  log_file: /mongodb/log/mongos.log
-  settings:
-    config_svrs: "cfg1.local:27019,cfg2.local:27019,cfg3.local:27019"
+  version: 3.6
+  keyid: 58712A2291FA4AD5
+  mongodb_package: mongodb-org
+  conf_path: /etc/mongod.conf
+  log_path: /srv/mongodb/log
+  db_path: /srv/mongodb/data
+  mongod: mongod
+  mongod_settings:
+    systemLog:
+      destination: file
+      logAppend: true
+      path: /var/log/mongodb/mongod.log
+    storage:
+      dbPath: /srv/mongodb/data
+      journal:
+        enabled: true
+    net:
+      port: 27017
+      bindIp: 0.0.0.0
+    setParameter:
+      # This parameter allows the configuration of the admin user.
+      # As soon as the admin user is configured, mongodb will no longer
+      # allow this to happen.
+      enableLocalhostAuthBypass: true
+    security:
+      authorization: enabled
+    #  keyFile: /srv/mongodb/keyfile
+    #replication:
+    #  replSetName: rs-mongo
+  users:
+    # The admin user is special and it is provisioned before any other users.
+    admin:
+      # We don't want a user check to be executed for the admin user because
+      # such a check requires the admin user to be present. Chicken and egg
+      # problem.
+      - check: False
+      - passwd: password
+      - roles:
+        - db: admin
+          role: root
+    # All commands under the username are arguments for the mongodb_user state
+    # and, as such, require a list format.
+    test:
+      - passwd: testpassword
+      - roles:
+        - role: read
+          db: reporting
+        - role: readWrite
+          db: test
