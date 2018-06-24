@@ -47,6 +47,15 @@ mongodb_repo:
 {%- endif %}
 
 mongodb_package:
+  # More recent mongodb packages are not reloading systemd after deploying
+  # the mongod service. This causes a failure when trying to run the service
+  # later on.
+  {%- if grains['init'] == 'systemd' %}
+  module.run:
+    - name: service.systemctl_reload
+    - require:
+      - pkg: mongodb_package
+  {%- endif %}
   pkg.installed:
     - name: {{ mdb.mongodb_package }}
 
