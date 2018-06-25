@@ -98,9 +98,27 @@ mongodb_config:
     - group: root
     - mode: 644
 
+{%- set replicaset_key = mdb.get('replicaset', {}).get('key', None) %}
+{%- set replicaset_keyfile = mdb.get('replicaset', {}).get('keyfile', None) %}
+
+{%- if replicaset_key %}
+mongodb_keyfile:
+  file.managed:
+    - name: {{ replicaset_keyfile }}
+    - makedirs: True
+    - mode: 0400
+    - dir_mode: 0400
+    - user: mongodb
+    - group: mongodb
+    - contents: {{ replicaset_key }}
+{%- endif %}
+
 mongodb_service:
   service.running:
     - name: {{ mdb.mongod }}
     - enable: True
     - watch:
       - file: mongodb_config
+      {%- if replicaset_keyfile %}
+      - file: mongodb_keyfile
+      {%- endif %}

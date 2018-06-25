@@ -66,6 +66,9 @@ mongodb:
   log_path: /srv/mongodb/log
   db_path: /srv/mongodb/data
   mongod: mongod
+  replicaset:
+    key: blablablatestkey
+    keyfile: &keyfile /srv/mongodb/keyfile
   mongod_settings:
     systemLog:
       destination: file
@@ -85,9 +88,9 @@ mongodb:
       enableLocalhostAuthBypass: true
     security:
       authorization: enabled
-    #  keyFile: /srv/mongodb/keyfile
-    #replication:
-    #  replSetName: rs-mongo
+      keyFile: *keyfile
+    replication:
+      replSetName: rs1
   users:
     # The admin user is special and it is provisioned before any other users.
     admin:
