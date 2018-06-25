@@ -122,3 +122,14 @@ mongodb_service:
       {%- if replicaset_keyfile %}
       - file: mongodb_keyfile
       {%- endif %}
+
+{%- if replicaset_keyfile %}
+# TODO: run this only if the node is intended as the master or initial master
+# of the replicaset
+mongodb_setup_replicaset:
+  cmd.run:
+    - name: mongo --eval 'rs.initiate()'
+    - onlyif: mongo --eval 'rs.status()' | grep NotYetInitialized
+    - require:
+      - service: mongodb_service
+{%- endif %}
